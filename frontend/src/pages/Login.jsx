@@ -7,6 +7,8 @@ import { useAuth } from "../context/AuthContext";
 const demoEmail = "admin@leadflowcrm.com";
 const demoPassword = "Admin@12345";
 const loginError = "Invalid email or password. Please check the demo credentials and try again.";
+const inputClass = "input h-12 pl-11 pr-4 leading-none placeholder:text-slate-400 disabled:bg-slate-50 disabled:text-slate-500";
+const inputIconClass = "pointer-events-none absolute inset-y-0 left-3 flex items-center text-slate-400";
 
 const Login = () => {
   const { login, isAuthenticated } = useAuth();
@@ -75,13 +77,15 @@ const Login = () => {
               <div>
                 <label className="label" htmlFor="email">Email</label>
                 <div className="relative">
-                  <Mail className="pointer-events-none absolute left-3 top-3 text-slate-400" size={18} />
+                  <span className={inputIconClass}>
+                    <Mail size={18} strokeWidth={2} />
+                  </span>
                   <input
                     id="email"
                     name="email"
                     type="email"
                     autoComplete="email"
-                    className="input pl-10"
+                    className={inputClass}
                     placeholder={demoEmail}
                     value={form.email}
                     onChange={(e) => setForm({ ...form, email: e.target.value })}
@@ -93,13 +97,15 @@ const Login = () => {
               <div>
                 <label className="label" htmlFor="password">Password</label>
                 <div className="relative">
-                  <LockKeyhole className="pointer-events-none absolute left-3 top-3 text-slate-400" size={18} />
+                  <span className={inputIconClass}>
+                    <LockKeyhole size={18} strokeWidth={2} />
+                  </span>
                   <input
                     id="password"
                     name="password"
                     type="password"
                     autoComplete="current-password"
-                    className="input pl-10"
+                    className={inputClass}
                     placeholder="Enter your password"
                     value={form.password}
                     onChange={(e) => setForm({ ...form, password: e.target.value })}
