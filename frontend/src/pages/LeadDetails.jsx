@@ -1,5 +1,5 @@
 import { ArrowLeft, Edit, Mail, MessageCircle, Phone, Plus, Trash2 } from "lucide-react";
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import toast from "react-hot-toast";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import { Badge } from "../components/Badge";
@@ -19,14 +19,14 @@ const LeadDetails = () => {
   const [note, setNote] = useState("");
   const [savingNote, setSavingNote] = useState(false);
 
-  const loadLead = () => {
+  const loadLead = useCallback(() => {
     api.get(`/leads/${id}`)
       .then(({ data }) => setLead(data.lead))
       .catch((error) => toast.error(error.message))
       .finally(() => setLoading(false));
-  };
+  }, [id]);
 
-  useEffect(() => { loadLead(); }, [id]);
+  useEffect(() => { loadLead(); }, [loadLead]);
 
   const whatsappPhone = useMemo(() => (lead?.phone || "").replace(/\D/g, ""), [lead]);
   const follow = lead ? followUpLabel(lead.followUpDate) : null;

@@ -1,7 +1,11 @@
-node_modules
+node_modules/
+**/node_modules/
+dist/
+**/dist/
 .env
-backend/.env
-frontend/.env
-frontend/dist
+.env.*
+!.env.example
+logs/
+*.log
+coverage/
 .DS_Store
-npm-debug.log*

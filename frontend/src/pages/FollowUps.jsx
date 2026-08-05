@@ -15,8 +15,8 @@ const FollowUps = () => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    api.get("/leads", { params: { limit: 100, sort: "newest" } })
-      .then(({ data }) => setLeads(data.leads.filter((lead) => lead.followUpDate)))
+    api.get("/leads/follow-ups", { params: { limit: 100 } })
+      .then(({ data }) => setLeads(data.leads))
       .catch((error) => toast.error(error.message))
       .finally(() => setLoading(false));
   }, []);

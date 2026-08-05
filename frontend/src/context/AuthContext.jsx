@@ -46,7 +46,14 @@ export const AuthProvider = ({ children }) => {
     setAdmin(null);
   };
 
-  const value = useMemo(() => ({ admin, token, booting, isAuthenticated: Boolean(token), login, logout }), [admin, token, booting]);
+  const updateProfile = async (profile) => {
+    const { data } = await api.put("/auth/profile", profile);
+    localStorage.setItem("leadflow_admin", JSON.stringify(data.admin));
+    setAdmin(data.admin);
+    return data.admin;
+  };
+
+  const value = useMemo(() => ({ admin, token, booting, isAuthenticated: Boolean(token), login, logout, updateProfile }), [admin, token, booting]);
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 };

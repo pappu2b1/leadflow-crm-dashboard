@@ -1,0 +1,10 @@
+import express from "express";
+import { addLeadNote, createLead, deleteLead, getFollowUps, getLeadById, getLeadNotes, getLeads, updateLead } from "../controllers/leadController.js";
+import { protect } from "../middleware/auth.js";
+const router = express.Router();
+router.use(protect);
+router.get("/follow-ups", getFollowUps);
+router.route("/").get(getLeads).post(createLead);
+router.route("/:id").get(getLeadById).put(updateLead).delete(deleteLead);
+router.route("/:id/notes").get(getLeadNotes).post(addLeadNote);
+export default router;

@@ -1,176 +1,138 @@
-# LeadFlow CRM - Lead Management Admin Dashboard
+# LeadFlow CRM
 
-LeadFlow CRM is a premium, client-ready lead management admin dashboard built as a portfolio SaaS project. It helps businesses capture, manage, filter, update, follow up with, and report on sales leads from one professional admin panel.
+A full-stack lead management dashboard for capturing prospects, managing sales activity, scheduling follow-ups, and understanding pipeline performance. The repository is designed as a portfolio project with synthetic demo data and a production-minded API.
+
+**Live Demo:** Not deployed yet
+
+## Overview
+
+LeadFlow CRM combines a responsive React admin experience with an authenticated Express and MongoDB API. It keeps lead records, activity notes, follow-up queues, dashboard metrics, and business reports in one application.
+
+## Problem
+
+Small sales teams often track leads across spreadsheets and disconnected messages, making ownership, next actions, and conversion reporting difficult.
+
+## Solution
+
+LeadFlow provides a focused workspace for the full lead lifecycle while preserving a simple single-admin demo model that is easy to run and review locally.
 
 ## Features
 
-- JWT-based admin login with protected dashboard routes
-- Dashboard overview cards for total, new, contacted, qualified, converted, lost, today, and monthly leads
-- Lead management table with search, status/priority/source filters, newest/oldest sorting, pagination, badges, and actions
-- Add, view, edit, and delete lead workflows with validation and confirmation modal
-- Lead profile page with call, email, WhatsApp, edit, delete, and latest-first activity notes
-- Follow-up page with Today, Upcoming, and Overdue labels
-- Analytics reports with Recharts for status, source, priority, monthly growth, and conversion summary
-- Settings/profile page for demo admin details
-- Loading, error, empty, success toast, and responsive mobile states
-- MongoDB seed script with 15 clearly fictional sample leads
+- JWT admin login, protected routes, current-user lookup, and server-backed profile settings
+- Lead create, read, update, delete, search, filter, sort, assignment, budget, notes, and pagination
+- Dedicated paginated follow-up API that excludes closed leads
+- Dashboard counters for status, daily/monthly volume, upcoming, and overdue work
+- Reports for conversion, average budget, popular services, sources, priorities, statuses, and monthly growth
+- Responsive tables/cards with loading, empty, error, confirmation, and toast states
+- Health, version, and database readiness endpoints
+- Synthetic seed data and API integration tests
 
 ## Tech Stack
 
-Frontend: React, Vite, Tailwind CSS, React Router, Lucide React, Recharts, Axios, React Hot Toast
+- Frontend: React 18, Vite 5, Tailwind CSS, React Router, Axios, Recharts, Lucide, React Hot Toast
+- Backend: Node.js, Express, MongoDB, Mongoose, JWT, bcryptjs, Helmet, CORS, rate limiting, Morgan
+- Testing: Node test runner, Supertest, MongoDB Memory Server
 
-Backend: Node.js, Express.js, MongoDB, Mongoose, JWT, bcryptjs, Helmet, CORS, Morgan, Express Rate Limit
-
-## Screens / Pages
-
-- Login Page
-- Dashboard Overview
-- Leads List
-- Add Lead
-- View Lead Details
-- Edit Lead
-- Follow-ups
-- Reports
-- Settings/Profile
-- 404 Not Found
-
-## Project Structure
+## Architecture
 
 ```text
-LeadFlow-CRM-Dashboard/
-  backend/
-    src/
-      config/
-      controllers/
-      data/
-      middleware/
-      models/
-      routes/
-      utils/
-      server.js
-  frontend/
-    src/
-      components/
-      context/
-      hooks/
-      layouts/
-      pages/
-      services/
-      utils/
+Browser -> React/Vite frontend -> Axios + JWT -> Express API -> Mongoose -> MongoDB
 ```
 
-## Environment Variables
-
-Create `backend/.env` from `backend/.env.example`:
-
-```env
-PORT=5000
-MONGO_URI=mongodb://127.0.0.1:27017/leadflow_crm
-JWT_SECRET=replace_with_a_long_random_secret
-JWT_EXPIRES_IN=7d
-CLIENT_URL=http://localhost:5173
-DEMO_ADMIN_EMAIL=admin@leadflowcrm.com
-DEMO_ADMIN_PASSWORD=Admin@12345
+```text
+backend/src/        API app, server, models, routes, controllers, middleware, seed data
+frontend/src/       pages, layout, reusable components, auth context, API client
+backend/test/       isolated integration tests using an in-memory MongoDB
 ```
 
-Create `frontend/.env` from `frontend/.env.example`:
-
-```env
-VITE_API_URL=http://localhost:5000/api
-```
-
-Do not commit real `.env` files.
-
-## Demo Admin Login
-
-Email: `admin@leadflowcrm.com`
-
-Password: `Admin@12345`
-
-This password is for demo/portfolio use only. Production deployments should use a stronger unique password and rotate secrets regularly.
-
-## Installation
+## Frontend Setup
 
 ```bash
-npm run install:all
+cd frontend
+npm ci
+copy .env.example .env
+npm run dev
 ```
 
-Or install each app separately:
+The frontend defaults to `http://localhost:5173`.
+
+## Backend Setup
 
 ```bash
 cd backend
-npm install
-
-cd ../frontend
-npm install
-```
-
-## Seed Sample Data
-
-Make sure MongoDB is running and `backend/.env` exists, then run:
-
-```bash
+npm ci
+copy .env.example .env
 npm run seed
+npm run dev
 ```
 
-This creates the demo admin and 15 fictional sample leads.
+The backend defaults to `http://localhost:5000` and requires a reachable MongoDB instance for normal startup.
 
-## Run Locally
+From the repository root, `npm run install:all`, `npm run build`, `npm run lint`, and `npm test` provide convenience workflows.
 
-Backend API:
+## Environment Variables
+
+Backend (`backend/.env`):
+
+| Variable | Purpose |
+| --- | --- |
+| `PORT` | API port |
+| `MONGO_URI` | MongoDB connection URI |
+| `JWT_SECRET` | Private JWT signing secret |
+| `JWT_EXPIRES_IN` | Token lifetime |
+| `CLIENT_URL` | Allowed browser origin |
+| `DEMO_ADMIN_EMAIL` | Synthetic seeded admin email |
+| `DEMO_ADMIN_PASSWORD` | Synthetic seeded admin password |
+
+Frontend (`frontend/.env`): `VITE_API_URL` sets the API base URL. Copy the committed `.env.example` files and replace placeholders locally. Never commit real secrets.
+
+## Demo Data
+
+`npm run seed` replaces the configured database's admins and leads with one demo admin and 15 fictional leads. Use it only against a local/demo database you are comfortable clearing.
+
+## API Overview
+
+- Public: `GET /api/health`, `GET /api/version`, `GET /api/health/database`, `POST /api/auth/login`
+- Auth: `GET /api/auth/me`, `PUT /api/auth/profile`
+- Leads: `GET|POST /api/leads`, `GET|PUT|DELETE /api/leads/:id`
+- Notes: `GET|POST /api/leads/:id/notes`
+- Follow-ups: `GET /api/leads/follow-ups?type=upcoming|today|overdue&page=1&limit=20`
+- Analytics: `GET /api/stats/dashboard`, `GET /api/stats/reports`
+
+## Authentication
+
+Login returns a bearer token used by the frontend for protected API requests. The current demo stores it in local storage. Use secure HTTP-only cookie sessions or a hardened token strategy for a public production deployment.
+
+## Security
+
+Helmet, allow-listed CORS, JSON size limits, rate limiting, password hashing, JWT verification, allow-listed profile fields, input validation, and production-safe error responses are enabled. `.env`, logs, dependency folders, builds, and coverage are ignored.
+
+## Testing
 
 ```bash
-npm run dev:backend
+cd backend
+npm test
 ```
 
-Frontend dashboard:
+Tests use only synthetic records in an ephemeral in-memory MongoDB and do not access the configured development or production database.
 
-```bash
-npm run dev:frontend
-```
+## Screenshots
 
-Open `http://localhost:5173`.
+Real screenshots are not included yet. See [`docs/screenshots/README.md`](docs/screenshots/README.md) for the capture checklist.
 
-## Build
+## Deployment
 
-```bash
-npm run build
-```
+Not deployed yet. Before deployment, supply production environment variables, use a managed MongoDB database, configure the exact frontend origin, rotate credentials, run `npm ci`, `npm test`, `npm run lint`, and `npm run build`, then configure the host to serve the frontend and run `backend/src/server.js`.
 
-## API Routes
+## Known Limitations
 
-Auth:
+- Single `admin` role; no teams or fine-grained permissions
+- Access token is stored in browser local storage and has no refresh-token flow
+- No automated email/WhatsApp delivery, reminders, imports, exports, or audit trail
+- Follow-up screen currently requests up to 100 server-filtered records; API pagination metadata is available for future UI controls
+- Deployment configuration and real screenshots remain to be added
+- React Router 6 and Vite 5 require planned major-version upgrades to clear the remaining npm advisories
 
-- `POST /api/auth/login`
-- `GET /api/auth/me`
+## Future Improvements
 
-Leads:
-
-- `GET /api/leads`
-- `GET /api/leads/:id`
-- `POST /api/leads`
-- `PUT /api/leads/:id`
-- `DELETE /api/leads/:id`
-
-Notes:
-
-- `GET /api/leads/:id/notes`
-- `POST /api/leads/:id/notes`
-
-Stats:
-
-- `GET /api/stats/dashboard`
-- `GET /api/stats/reports`
-
-## Portfolio Use Case
-
-This project is designed for agencies, IT companies, clinics, coaching centers, real estate teams, local service businesses, and B2B companies that need a polished admin dashboard for lead tracking and follow-up management.
-
-## Production Improvements
-
-- Add refresh tokens and secure HTTP-only cookie auth
-- Add admin profile update APIs
-- Add audit logs and role permissions
-- Add CSV import/export
-- Add email/WhatsApp provider integrations
-- Add automated follow-up reminders
+Add secure cookie authentication, refresh-token rotation, role permissions, audit logs, follow-up notifications, CSV import/export, richer pipeline stages, and deployment-specific observability.

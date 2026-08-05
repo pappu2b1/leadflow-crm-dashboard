@@ -1,5 +1,5 @@
 import { Edit, Eye, Plus, Search, Trash2 } from "lucide-react";
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import toast from "react-hot-toast";
 import { Link } from "react-router-dom";
 import { Badge } from "../components/Badge";
@@ -21,15 +21,15 @@ const Leads = () => {
 
   const query = useMemo(() => ({ ...filters, search: debouncedSearch, page, limit: 10 }), [filters, debouncedSearch, page]);
 
-  const fetchLeads = () => {
+  const fetchLeads = useCallback(() => {
     setLoading(true);
     api.get("/leads", { params: query })
       .then(({ data }) => setPayload(data))
       .catch((error) => toast.error(error.message))
       .finally(() => setLoading(false));
-  };
+  }, [query]);
 
-  useEffect(() => { fetchLeads(); }, [query]);
+  useEffect(() => { fetchLeads(); }, [fetchLeads]);
 
   const updateFilter = (key, value) => {
     setFilters((current) => ({ ...current, [key]: value }));
