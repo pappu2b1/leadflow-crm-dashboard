@@ -1,6 +1,6 @@
-import bcrypt from "bcryptjs";
 import dotenv from "dotenv";
 import mongoose from "mongoose";
+import { pathToFileURL } from "node:url";
 import { connectDB } from "../config/db.js";
 import Admin from "../models/Admin.js";
 import Lead from "../models/Lead.js";
@@ -8,33 +8,56 @@ import { sampleLeads } from "./sampleLeads.js";
 
 dotenv.config();
 
-const seed = async () => {
-  await connectDB();
-  await Promise.all([Admin.deleteMany({}), Lead.deleteMany({})]);
+export const seedDemoData = async () => {
+  const email = (process.env.DEMO_ADMIN_EMAIL || "admin@leadflowcrm.com").toLowerCase().trim();
+  const password = process.env.DEMO_ADMIN_PASSWORD;
+  if (!password || password.length < 12) {
+    throw new Error("DEMO_ADMIN_PASSWORD must be set to at least 12 characters");
+  }
 
-  const admin = await Admin.create({
-    name: "LeadFlow Admin",
-    email: process.env.DEMO_ADMIN_EMAIL || "admin@leadflowcrm.com",
-    password: process.env.DEMO_ADMIN_PASSWORD || "Admin@12345",
-    role: "admin",
-    companyName: "LeadFlow CRM Demo",
-    defaultAssignee: "Sales Team"
-  });
+  let admin = await Admin.findOne({ email });
+  if (!admin) {
+    admin = await Admin.create({
+      name: "LeadFlow Admin",
+      email,
+      password,
+      role: "admin",
+      companyName: "LeadFlow CRM Demo",
+      defaultAssignee: "Sales Team"
+    });
+  }
 
-  const leads = sampleLeads.map((lead, index) => ({
-    ...lead,
-    notes: (lead.notes || []).map((note) => ({ ...note, createdBy: admin._id })),
-    createdAt: new Date(Date.now() - index * 2 * 24 * 60 * 60 * 1000),
-    updatedAt: new Date(Date.now() - index * 24 * 60 * 60 * 1000)
+  const now = Date.now();
+  const operations = sampleLeads.map((lead, index) => ({
+    updateOne: {
+      filter: { email: lead.email.toLowerCase() },
+      update: {
+        $setOnInsert: {
+          ...lead,
+          notes: (lead.notes || []).map((note) => ({ ...note, createdBy: admin._id })),
+          createdAt: new Date(now - index * 2 * 24 * 60 * 60 * 1000),
+          updatedAt: new Date(now - index * 24 * 60 * 60 * 1000)
+        }
+      },
+      upsert: true,
+      timestamps: false
+    }
   }));
-
-  await Lead.insertMany(leads);
-  console.log("Seed complete: demo admin and sample leads created.");
-  await mongoose.disconnect();
+  await Lead.bulkWrite(operations);
+  return { adminEmail: email, demoLeadCount: sampleLeads.length };
 };
 
-seed().catch(async (error) => {
-  console.error(error);
-  await mongoose.disconnect();
-  process.exit(1);
-});
+const isDirectRun = process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href;
+if (isDirectRun) {
+  connectDB()
+    .then(seedDemoData)
+    .then(async ({ adminEmail, demoLeadCount }) => {
+      console.log(`Seed complete: demo admin ${adminEmail} and ${demoLeadCount} synthetic leads ensured.`);
+      await mongoose.disconnect();
+    })
+    .catch(async (error) => {
+      console.error(error.message);
+      await mongoose.disconnect();
+      process.exit(1);
+    });
+}

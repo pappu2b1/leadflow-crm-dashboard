@@ -5,7 +5,6 @@ import { Navigate, useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 
 const demoEmail = "admin@leadflowcrm.com";
-const demoPassword = "Admin@12345";
 const loginError = "Invalid email or password. Please check the demo credentials and try again.";
 const inputClass = "input h-12 pl-11 pr-4 leading-none placeholder:text-slate-400 disabled:bg-slate-50 disabled:text-slate-500";
 const inputIconClass = "pointer-events-none absolute inset-y-0 left-3 flex items-center text-slate-400";
@@ -13,7 +12,7 @@ const inputIconClass = "pointer-events-none absolute inset-y-0 left-3 flex items
 const Login = () => {
   const { login, isAuthenticated } = useAuth();
   const navigate = useNavigate();
-  const [form, setForm] = useState({ email: demoEmail, password: demoPassword });
+  const [form, setForm] = useState({ email: demoEmail, password: "" });
   const [loading, setLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
 
@@ -139,7 +138,7 @@ const Login = () => {
               <p className="font-bold text-navy-900">Demo Access</p>
               <div className="mt-3 space-y-1.5">
                 <p><span className="font-semibold text-slate-900">Email:</span> {demoEmail}</p>
-                <p><span className="font-semibold text-slate-900">Password:</span> {demoPassword}</p>
+                <p className="text-slate-600">Use the password securely provided by the portfolio owner.</p>
               </div>
             </div>
           </section>

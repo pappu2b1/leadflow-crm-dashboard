@@ -88,7 +88,7 @@ Frontend (`frontend/.env`): `VITE_API_URL` sets the API base URL. Copy the commi
 
 ## Demo Data
 
-`npm run seed` replaces the configured database's admins and leads with one demo admin and 15 fictional leads. Use it only against a local/demo database you are comfortable clearing.
+`npm run seed` idempotently ensures one synthetic demo admin and 15 fictional leads without deleting or overwriting unrelated records. Set `DEMO_ADMIN_PASSWORD` securely in the environment before running it.
 
 ## API Overview
 

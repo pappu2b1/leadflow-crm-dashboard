@@ -6,6 +6,7 @@ import request from "supertest";
 import { createApp } from "../src/app.js";
 import Admin from "../src/models/Admin.js";
 import Lead from "../src/models/Lead.js";
+import { seedDemoData } from "../src/data/seed.js";
 
 process.env.NODE_ENV = "test";
 process.env.JWT_SECRET = "synthetic_test_secret_not_for_production";
@@ -79,6 +80,16 @@ test("profile updates allowed fields without changing role", async () => {
   assert.equal(res.body.admin.name, "Updated Admin"); assert.equal(res.body.admin.role, "admin");
 });
 test("reports endpoint returns portfolio analytics", async () => { await Lead.create(leadPayload); const res = await request(app).get("/api/stats/reports").set("Authorization", `Bearer ${token}`).expect(200); assert.equal(res.body.reportCards.conversionRate, 0); });
+test("demo seed is idempotent and preserves unrelated records", async () => {
+  process.env.DEMO_ADMIN_EMAIL = "demo-seed@example.test";
+  process.env.DEMO_ADMIN_PASSWORD = "SyntheticSeedPassword123!";
+  await Lead.create({ ...leadPayload, email: "unrelated@example.test", fullName: "Unrelated Synthetic Lead" });
+  await seedDemoData();
+  await seedDemoData();
+  assert.equal(await Admin.countDocuments({ email: "demo-seed@example.test" }), 1);
+  assert.equal(await Lead.countDocuments({ email: { $in: ["rahul.sharma@example.com", "unrelated@example.test"] } }), 2);
+  assert.equal(await Lead.countDocuments(), 16);
+});
 test("malformed identifiers and unknown API routes return safe 4xx JSON", async () => {
   const malformed = await request(app).get("/api/leads/not-an-object-id").set("Authorization", `Bearer ${token}`).expect(400);
   assert.equal(malformed.body.message, "Invalid resource identifier");
