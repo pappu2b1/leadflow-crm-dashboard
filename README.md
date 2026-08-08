@@ -122,7 +122,21 @@ Real screenshots are not included yet. See [`docs/screenshots/README.md`](docs/s
 
 ## Deployment
 
-Not deployed yet. Before deployment, supply production environment variables, use a managed MongoDB database, configure the exact frontend origin, rotate credentials, run `npm ci`, `npm test`, `npm run lint`, and `npm run build`, then configure the host to serve the frontend and run `backend/src/server.js`.
+Not deployed yet. The backend is prepared for a Render Web Service with the following settings:
+
+| Setting | Value |
+| --- | --- |
+| Service name | `leadflow-crm-api` |
+| Repository | `pappu2b1/leadflow-crm-dashboard` |
+| Branch | `main` |
+| Root directory | `backend` |
+| Runtime | Node |
+| Build command | `npm ci` |
+| Start command | `npm start` |
+
+Set `NODE_ENV=production`, `MONGO_URI`, and `JWT_SECRET` in Render. Render supplies `PORT` automatically. `CLIENT_URL` may remain unset for backend-only verification; production browser origins are denied until it is set to the exact deployed frontend origin.
+
+Use a dedicated MongoDB Atlas database named `leadflow_crm` and an application user with `readWrite` permission only on that database. Allow-list the Render service outbound IP/CIDR ranges rather than retaining broad public network access. Configure `DEMO_ADMIN_PASSWORD` securely before running `npm run seed`; the seed is idempotent and non-destructive.
 
 ## Known Limitations
 

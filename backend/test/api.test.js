@@ -96,3 +96,21 @@ test("malformed identifiers and unknown API routes return safe 4xx JSON", async 
   const missing = await request(app).get("/api/does-not-exist").expect(404);
   assert.equal(missing.body.success, false);
 });
+test("production CORS is disabled until CLIENT_URL is configured", async () => {
+  const previousNodeEnv = process.env.NODE_ENV;
+  const previousClientUrl = process.env.CLIENT_URL;
+  try {
+    process.env.NODE_ENV = "production";
+    delete process.env.CLIENT_URL;
+    const unconfigured = await request(createApp()).get("/api/health").set("Origin", "https://untrusted.example").expect(200);
+    assert.equal(unconfigured.headers["access-control-allow-origin"], undefined);
+
+    process.env.CLIENT_URL = "https://leadflow.example";
+    const configured = await request(createApp()).get("/api/health").set("Origin", "https://leadflow.example").expect(200);
+    assert.equal(configured.headers["access-control-allow-origin"], "https://leadflow.example");
+  } finally {
+    process.env.NODE_ENV = previousNodeEnv;
+    if (previousClientUrl === undefined) delete process.env.CLIENT_URL;
+    else process.env.CLIENT_URL = previousClientUrl;
+  }
+});

@@ -12,8 +12,10 @@ import packageJson from "../package.json" with { type: "json" };
 
 export const createApp = () => {
   const app = express();
+  const configuredClientUrl = process.env.CLIENT_URL?.trim();
+  const corsOrigin = configuredClientUrl || (process.env.NODE_ENV === "production" ? false : ["http://localhost:5173", "http://127.0.0.1:5173"]);
   app.use(helmet());
-  app.use(cors({ origin: process.env.CLIENT_URL || "http://localhost:5173", credentials: true }));
+  app.use(cors({ origin: corsOrigin, credentials: true }));
   app.use(express.json({ limit: "1mb" }));
   if (process.env.NODE_ENV !== "test") app.use(morgan(process.env.NODE_ENV === "production" ? "combined" : "dev"));
   app.use(rateLimit({ windowMs: 900000, max: process.env.NODE_ENV === "test" ? 10000 : 300, standardHeaders: true, legacyHeaders: false }));
