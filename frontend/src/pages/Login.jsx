@@ -4,16 +4,16 @@ import toast from "react-hot-toast";
 import { Navigate, useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 
-const demoEmail = "admin@leadflowcrm.com";
-const loginError = "Invalid email or password. Please check the demo credentials and try again.";
+const loginError = "Invalid email or password.";
 const inputClass = "input h-12 pl-11 pr-4 leading-none placeholder:text-slate-400 disabled:bg-slate-50 disabled:text-slate-500";
 const inputIconClass = "pointer-events-none absolute inset-y-0 left-3 flex items-center text-slate-400";
 
 const Login = () => {
-  const { login, isAuthenticated } = useAuth();
+  const { login, openDemo, isAuthenticated } = useAuth();
   const navigate = useNavigate();
-  const [form, setForm] = useState({ email: demoEmail, password: "" });
+  const [form, setForm] = useState({ email: "", password: "" });
   const [loading, setLoading] = useState(false);
+  const [demoLoading, setDemoLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
 
   if (isAuthenticated) return <Navigate to="/" replace />;
@@ -31,6 +31,22 @@ const Login = () => {
       toast.error(loginError);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const launchDemo = async () => {
+    setDemoLoading(true);
+    setErrorMessage("");
+    try {
+      await openDemo();
+      toast.success("Read-only demo opened");
+      navigate("/");
+    } catch {
+      const message = "Live demo temporarily unavailable.";
+      setErrorMessage(message);
+      toast.error(message);
+    } finally {
+      setDemoLoading(false);
     }
   };
 
@@ -85,10 +101,10 @@ const Login = () => {
                     type="email"
                     autoComplete="email"
                     className={inputClass}
-                    placeholder={demoEmail}
+                    placeholder="admin@example.com"
                     value={form.email}
                     onChange={(e) => setForm({ ...form, email: e.target.value })}
-                    disabled={loading}
+                    disabled={loading || demoLoading}
                   />
                 </div>
               </div>
@@ -108,7 +124,7 @@ const Login = () => {
                     placeholder="Enter your password"
                     value={form.password}
                     onChange={(e) => setForm({ ...form, password: e.target.value })}
-                    disabled={loading}
+                    disabled={loading || demoLoading}
                   />
                 </div>
               </div>
@@ -119,7 +135,7 @@ const Login = () => {
                 </div>
               )}
 
-              <button className="btn-primary w-full py-3" disabled={loading} type="submit">
+              <button className="btn-primary w-full py-3" disabled={loading || demoLoading} type="submit">
                 {loading ? (
                   <>
                     <span className="h-4 w-4 animate-spin rounded-full border-2 border-white/40 border-t-white" />
@@ -134,12 +150,11 @@ const Login = () => {
               </button>
             </form>
 
-            <div className="mt-6 rounded-xl border border-navy-100 bg-navy-50 p-4 text-sm text-slate-700">
-              <p className="font-bold text-navy-900">Demo Access</p>
-              <div className="mt-3 space-y-1.5">
-                <p><span className="font-semibold text-slate-900">Email:</span> {demoEmail}</p>
-                <p className="text-slate-600">Use the password securely provided by the portfolio owner.</p>
-              </div>
+            <div className="mt-6 border-t border-slate-200 pt-6">
+              <button className="btn-secondary w-full py-3" type="button" onClick={launchDemo} disabled={loading || demoLoading}>
+                <Eye size={18} /> {demoLoading ? "Opening demo..." : "Open Live Demo"}
+              </button>
+              <p className="mt-3 text-center text-xs leading-5 text-slate-500">Explore synthetic CRM data in a secure read-only workspace. No credentials required.</p>
             </div>
           </section>
         </div>

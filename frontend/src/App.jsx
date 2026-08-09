@@ -1,5 +1,5 @@
 import { Route, Routes } from "react-router-dom";
-import { ProtectedRoute } from "./components/ProtectedRoute";
+import { AdminRoute, ProtectedRoute } from "./components/ProtectedRoute";
 import { DashboardLayout } from "./layouts/DashboardLayout";
 import Dashboard from "./pages/Dashboard";
 import FollowUps from "./pages/FollowUps";
@@ -10,7 +10,6 @@ import Login from "./pages/Login";
 import NotFound from "./pages/NotFound";
 import Reports from "./pages/Reports";
 import Settings from "./pages/Settings";
-
 const App = () => (
   <Routes>
     <Route path="/login" element={<Login />} />
@@ -18,16 +17,17 @@ const App = () => (
       <Route element={<DashboardLayout />}>
         <Route index element={<Dashboard />} />
         <Route path="leads" element={<Leads />} />
-        <Route path="leads/new" element={<LeadFormPage />} />
         <Route path="leads/:id" element={<LeadDetails />} />
-        <Route path="leads/:id/edit" element={<LeadFormPage edit />} />
         <Route path="follow-ups" element={<FollowUps />} />
         <Route path="reports" element={<Reports />} />
-        <Route path="settings" element={<Settings />} />
+        <Route element={<AdminRoute />}>
+          <Route path="leads/new" element={<LeadFormPage />} />
+          <Route path="leads/:id/edit" element={<LeadFormPage edit />} />
+          <Route path="settings" element={<Settings />} />
+        </Route>
         <Route path="*" element={<NotFound />} />
       </Route>
     </Route>
   </Routes>
 );
-
 export default App;

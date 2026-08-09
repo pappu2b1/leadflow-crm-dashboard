@@ -35,7 +35,7 @@ test("database health reports a connected test database", async () => { const re
 test("login accepts valid credentials", async () => { const res = await request(app).post("/api/auth/login").send(credentials).expect(200); assert.ok(res.body.token); });
 test("login rejects invalid credentials", async () => { await request(app).post("/api/auth/login").send({ ...credentials, password: "wrong" }).expect(401); });
 test("protected endpoints reject missing tokens", async () => { await request(app).get("/api/leads").expect(401); });
-test("valid token returns the current admin", async () => { const res = await request(app).get("/api/auth/me").set("Authorization", `Bearer ${token}`).expect(200); assert.equal(res.body.admin.email, credentials.email); });
+test("valid token returns the current admin", async () => { const res = await request(app).get("/api/auth/me").set("Authorization", `Bearer ${token}`).expect(200); assert.equal(res.body.user.email, credentials.email); });
 test("lead create and update workflow validates and persists data", async () => {
   const created = await request(app).post("/api/leads").set("Authorization", `Bearer ${token}`).send(leadPayload).expect(201);
   const updated = await request(app).put(`/api/leads/${created.body.lead._id}`).set("Authorization", `Bearer ${token}`).send({ status: "Qualified" }).expect(200);
@@ -77,7 +77,7 @@ test("follow-up type filters respect date boundaries and pagination", async () =
 });
 test("profile updates allowed fields without changing role", async () => {
   const res = await request(app).put("/api/auth/profile").set("Authorization", `Bearer ${token}`).send({ name: "Updated Admin", email: credentials.email, companyName: "Updated Co", defaultAssignee: "Updated Team", role: "superadmin" }).expect(200);
-  assert.equal(res.body.admin.name, "Updated Admin"); assert.equal(res.body.admin.role, "admin");
+  assert.equal(res.body.user.name, "Updated Admin"); assert.equal(res.body.user.role, "admin");
 });
 test("reports endpoint returns portfolio analytics", async () => { await Lead.create(leadPayload); const res = await request(app).get("/api/stats/reports").set("Authorization", `Bearer ${token}`).expect(200); assert.equal(res.body.reportCards.conversionRate, 0); });
 test("demo seed is idempotent and preserves unrelated records", async () => {
@@ -113,4 +113,49 @@ test("production CORS is disabled until CLIENT_URL is configured", async () => {
     if (previousClientUrl === undefined) delete process.env.CLIENT_URL;
     else process.env.CLIENT_URL = previousClientUrl;
   }
+});
+
+
+test("demo authentication returns a short-lived read-only identity", async () => {
+  const login = await request(app).post("/api/auth/demo").expect(200);
+  assert.ok(login.body.token);
+  assert.equal(login.body.user.role, "demo");
+  assert.equal(login.body.user.mode, "readonly");
+  assert.equal(login.body.user.email, undefined);
+  const me = await request(app).get("/api/auth/me").set("Authorization", "Bearer " + login.body.token).expect(200);
+  assert.deepEqual(me.body.user, { id: "demo", name: "Demo User", role: "demo", mode: "readonly" });
+});
+
+test("demo reads use only the isolated synthetic fixture", async () => {
+  const privateLead = await Lead.create({ ...leadPayload, fullName: "Private Database Record", email: "private-record@example.test" });
+  const login = await request(app).post("/api/auth/demo").expect(200);
+  const auth = { Authorization: "Bearer " + login.body.token };
+  const list = await request(app).get("/api/leads?limit=100").set(auth).expect(200);
+  assert.equal(list.body.pagination.total, 15);
+  assert.equal(list.body.leads.some((lead) => lead.email === privateLead.email), false);
+  assert.equal(list.body.leads.every((lead) => String(lead._id).startsWith("demo-lead-")), true);
+  const detail = await request(app).get("/api/leads/" + list.body.leads[0]._id).set(auth).expect(200);
+  assert.equal(detail.body.lead._id, list.body.leads[0]._id);
+  await request(app).get("/api/leads/" + privateLead._id).set(auth).expect(404);
+  await request(app).get("/api/leads/follow-ups").set(auth).expect(200);
+  await request(app).get("/api/stats/dashboard").set(auth).expect(200);
+  await request(app).get("/api/stats/reports").set(auth).expect(200);
+});
+
+test("demo mode blocks all CRM mutations and private profile updates", async () => {
+  const login = await request(app).post("/api/auth/demo").expect(200);
+  const auth = { Authorization: "Bearer " + login.body.token };
+  const paths = [
+    ["post", "/api/leads", leadPayload],
+    ["put", "/api/leads/demo-lead-001", { status: "Qualified" }],
+    ["patch", "/api/leads/demo-lead-001", { status: "Qualified" }],
+    ["delete", "/api/leads/demo-lead-001"],
+    ["post", "/api/leads/demo-lead-001/notes", { message: "Blocked" }],
+    ["put", "/api/auth/profile", { name: "Blocked" }]
+  ];
+  for (const [method, path, body] of paths) {
+    const response = await request(app)[method](path).set(auth).send(body).expect(403);
+    assert.deepEqual(response.body, { success: false, message: "Demo mode is read-only." });
+  }
+  assert.equal(await Lead.countDocuments(), 0);
 });

@@ -1,5 +1,6 @@
 import Lead, { LEAD_PRIORITIES, LEAD_SOURCES, LEAD_STATUSES } from "../models/Lead.js";
 import { asyncHandler } from "../utils/asyncHandler.js";
+import { getDemoDashboard, getDemoReports } from "../services/demoDataService.js";
 
 const startOfDay = (date) => new Date(date.getFullYear(), date.getMonth(), date.getDate());
 const endOfDay = (date) => new Date(date.getFullYear(), date.getMonth(), date.getDate() + 1);
@@ -12,6 +13,7 @@ const countByField = async (field, values) => {
 };
 
 export const getDashboardStats = asyncHandler(async (req, res) => {
+  if (req.user?.role === "demo") return res.json({ success: true, ...getDemoDashboard() });
   const now = new Date();
   const todayStart = startOfDay(now);
   const tomorrowStart = endOfDay(now);
@@ -45,6 +47,7 @@ export const getDashboardStats = asyncHandler(async (req, res) => {
 });
 
 export const getReports = asyncHandler(async (req, res) => {
+  if (req.user?.role === "demo") return res.json({ success: true, ...getDemoReports() });
   const [total, converted, byStatus, bySource, byPriority, budgetAgg, services, monthly] = await Promise.all([
     Lead.countDocuments(),
     Lead.countDocuments({ status: "Converted" }),

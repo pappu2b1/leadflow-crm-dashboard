@@ -7,3 +7,9 @@ export const ProtectedRoute = () => {
   if (booting) return <div className="p-6"><LoadingState label="Securing dashboard" /></div>;
   return isAuthenticated ? <Outlet /> : <Navigate to="/login" replace />;
 };
+
+export const AdminRoute = () => {
+  const { booting, isAuthenticated, user } = useAuth();
+  if (booting) return <div className="p-6"><LoadingState label="Securing dashboard" /></div>;
+  return isAuthenticated && user?.role !== "demo" ? <Outlet /> : <Navigate to="/" replace />;
+};

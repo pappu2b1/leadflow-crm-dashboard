@@ -4,10 +4,10 @@ import toast from "react-hot-toast";
 import { useAuth } from "../context/AuthContext";
 
 const Settings = () => {
-  const { admin, updateProfile } = useAuth();
+  const { user, updateProfile } = useAuth();
   const [form, setForm] = useState({ name: "", email: "", companyName: "", defaultAssignee: "" });
   const [saving, setSaving] = useState(false);
-  useEffect(() => setForm({ name: admin?.name || "", email: admin?.email || "", companyName: admin?.companyName || "", defaultAssignee: admin?.defaultAssignee || "" }), [admin]);
+  useEffect(() => setForm({ name: user?.name || "", email: user?.email || "", companyName: user?.companyName || "", defaultAssignee: user?.defaultAssignee || "" }), [user]);
   const save = async (event) => {
     event.preventDefault(); setSaving(true);
     try { await updateProfile(form); localStorage.removeItem("leadflow_settings"); toast.success("Profile settings saved"); }

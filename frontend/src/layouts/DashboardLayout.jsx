@@ -14,7 +14,7 @@ const navItems = [
 
 export const DashboardLayout = () => {
   const [open, setOpen] = useState(false);
-  const { admin, logout } = useAuth();
+  const { user, isDemo, logout } = useAuth();
   const navigate = useNavigate();
 
   const doLogout = () => {
@@ -34,7 +34,7 @@ export const DashboardLayout = () => {
           <button className="rounded-lg p-2 text-blue-100 hover:bg-white/10 lg:hidden" onClick={() => setOpen(false)} aria-label="Close sidebar"><X size={20} /></button>
         </div>
         <nav className="mt-8 flex flex-1 flex-col gap-1">
-          {navItems.map(({ to, label, icon: Icon }) => (
+          {navItems.filter((item) => !isDemo || !["/leads/new", "/settings"].includes(item.to)).map(({ to, label, icon: Icon }) => (
             <NavLink key={to} to={to} end={to === "/"} onClick={() => setOpen(false)} className={({ isActive }) => `flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-semibold transition ${isActive ? "bg-white text-navy-900" : "text-blue-100 hover:bg-white/10 hover:text-white"}`}>
               <Icon size={18} /> {label}
             </NavLink>
@@ -50,17 +50,18 @@ export const DashboardLayout = () => {
             <button className="icon-btn lg:hidden" onClick={() => setOpen(true)} aria-label="Open sidebar"><Menu size={20} /></button>
             <div className="hidden lg:block">
               <p className="text-sm font-medium text-slate-500">Welcome back</p>
-              <h1 className="text-lg font-semibold text-slate-950">{admin?.name || "Admin"}</h1>
+              <h1 className="text-lg font-semibold text-slate-950">{user?.name || "Admin"}</h1>
             </div>
             <div className="flex items-center gap-3">
               <div className="text-right">
-                <p className="text-sm font-semibold text-slate-900">{admin?.name || "Admin"}</p>
-                <p className="text-xs text-slate-500">{admin?.email}</p>
+                <p className="text-sm font-semibold text-slate-900">{user?.name || "Admin"}</p>
+                <p className="text-xs text-slate-500">{isDemo ? "Read-only portfolio demo" : user?.email}</p>
               </div>
-              <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-navy-700 text-sm font-bold text-white">{(admin?.name || "A").slice(0, 1)}</div>
+              <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-navy-700 text-sm font-bold text-white">{(user?.name || "A").slice(0, 1)}</div>
             </div>
           </div>
         </header>
+        {isDemo && <div className="border-b border-amber-200 bg-amber-50 px-4 py-2 text-center text-sm font-semibold text-amber-900">Demo Mode · Read Only — data is synthetic and changes are disabled.</div>}
         <main className="px-4 py-6 sm:px-6 lg:px-8"><Outlet /></main>
       </div>
     </div>

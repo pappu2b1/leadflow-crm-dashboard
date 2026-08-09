@@ -7,11 +7,13 @@ import { ConfirmModal } from "../components/ConfirmModal";
 import { EmptyState } from "../components/EmptyState";
 import { leadPriorities, leadSources, leadStatuses } from "../components/LeadForm";
 import { LoadingState } from "../components/LoadingState";
+import { useAuth } from "../context/AuthContext";
 import { useDebounce } from "../hooks/useDebounce";
 import api from "../services/api";
 import { formatCurrency, formatDate } from "../utils/format";
 
 const Leads = () => {
+  const { isDemo } = useAuth();
   const [filters, setFilters] = useState({ search: "", status: "", priority: "", leadSource: "", sort: "newest" });
   const [page, setPage] = useState(1);
   const [payload, setPayload] = useState({ leads: [], pagination: { page: 1, pages: 1, total: 0 } });
@@ -51,7 +53,7 @@ const Leads = () => {
     <div className="space-y-6">
       <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
         <div><h2 className="text-2xl font-bold text-slate-950">Lead Management</h2><p className="text-sm text-slate-500">Search, filter, update, and follow every sales opportunity.</p></div>
-        <Link to="/leads/new" className="btn-primary"><Plus size={18} /> Add Lead</Link>
+        {!isDemo && <Link to="/leads/new" className="btn-primary"><Plus size={18} /> Add Lead</Link>}
       </div>
       <section className="card p-4">
         <div className="grid gap-3 md:grid-cols-[1.5fr_repeat(4,1fr)]">
@@ -79,7 +81,7 @@ const Leads = () => {
                     <td className="px-4 py-4"><Badge type="priority">{lead.priority}</Badge></td>
                     <td className="px-4 py-4 font-semibold text-slate-700">{formatCurrency(lead.budget)}</td>
                     <td className="px-4 py-4 text-slate-600">{formatDate(lead.followUpDate)}</td>
-                    <td className="px-4 py-4"><div className="flex justify-end gap-2"><Link className="icon-btn" to={`/leads/${lead._id}`} title="View"><Eye size={17} /></Link><Link className="icon-btn" to={`/leads/${lead._id}/edit`} title="Edit"><Edit size={17} /></Link><button className="icon-btn hover:border-rose-200 hover:bg-rose-50 hover:text-rose-700" onClick={() => setDeleteTarget(lead)} title="Delete"><Trash2 size={17} /></button></div></td>
+                    <td className="px-4 py-4"><div className="flex justify-end gap-2"><Link className="icon-btn" to={`/leads/${lead._id}`} title="View"><Eye size={17} /></Link>{!isDemo && <><Link className="icon-btn" to={`/leads/${lead._id}/edit`} title="Edit"><Edit size={17} /></Link><button className="icon-btn hover:border-rose-200 hover:bg-rose-50 hover:text-rose-700" onClick={() => setDeleteTarget(lead)} title="Delete"><Trash2 size={17} /></button></>}</div></td>
                   </tr>
                 ))}
               </tbody>
@@ -91,7 +93,7 @@ const Leads = () => {
           </div>
         </section>
       ) : <EmptyState title="No leads found" description="No leads match the current search or filters." />}
-      <ConfirmModal open={Boolean(deleteTarget)} title="Delete lead?" description={`This will permanently delete ${deleteTarget?.fullName || "this lead"}.`} onCancel={() => setDeleteTarget(null)} onConfirm={deleteLead} confirmText="Delete Lead" />
+      <ConfirmModal open={!isDemo && Boolean(deleteTarget)} title="Delete lead?" description={`This will permanently delete ${deleteTarget?.fullName || "this lead"}.`} onCancel={() => setDeleteTarget(null)} onConfirm={deleteLead} confirmText="Delete Lead" />
     </div>
   );
 };

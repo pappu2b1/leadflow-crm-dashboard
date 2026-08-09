@@ -9,3 +9,4 @@ logs/
 *.log
 coverage/
 .DS_Store
+backend/seed-output.txt

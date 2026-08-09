@@ -2,7 +2,8 @@
 
 A full-stack lead management dashboard for capturing prospects, managing sales activity, scheduling follow-ups, and understanding pipeline performance. The repository is designed as a portfolio project with synthetic demo data and a production-minded API.
 
-**Live Demo:** Not deployed yet
+**Live Demo:** https://leadflow.papputhakur.com<br>
+**API:** https://leadflow-crm-dashboard.onrender.com
 
 ## Overview
 
@@ -18,7 +19,8 @@ LeadFlow provides a focused workspace for the full lead lifecycle while preservi
 
 ## Features
 
-- JWT admin login, protected routes, current-user lookup, and server-backed profile settings
+- Private JWT admin login plus credential-free, backend-enforced read-only portfolio demo access
+- Role-aware protected routes, current-user lookup, and server-backed admin profile settings
 - Lead create, read, update, delete, search, filter, sort, assignment, budget, notes, and pagination
 - Dedicated paginated follow-up API that excludes closed leads
 - Dashboard counters for status, daily/monthly volume, upcoming, and overdue work
@@ -36,7 +38,8 @@ LeadFlow provides a focused workspace for the full lead lifecycle while preservi
 ## Architecture
 
 ```text
-Browser -> React/Vite frontend -> Axios + JWT -> Express API -> Mongoose -> MongoDB
+Admin -> React/Vite -> admin JWT -> Express API -> Mongoose -> MongoDB
+Visitor -> React/Vite -> read-only demo JWT -> Express API -> static synthetic fixture
 ```
 
 ```text
@@ -88,11 +91,13 @@ Frontend (`frontend/.env`): `VITE_API_URL` sets the API base URL. Copy the commi
 
 ## Demo Data
 
-`npm run seed` idempotently ensures one synthetic demo admin and 15 fictional leads without deleting or overwriting unrelated records. Set `DEMO_ADMIN_PASSWORD` securely in the environment before running it.
+The public **Open Live Demo** flow requires no credentials. Its short-lived demo token can read only a static 15-lead synthetic fixture in the backend; it never queries MongoDB, and every mutation is rejected with HTTP 403.
+
+The seed command remains an optional, separate local/admin setup tool. It is idempotent and does not delete or overwrite unrelated records.
 
 ## API Overview
 
-- Public: `GET /api/health`, `GET /api/version`, `GET /api/health/database`, `POST /api/auth/login`
+- Public: `GET /api/health`, `GET /api/version`, `GET /api/health/database`, `POST /api/auth/login, POST /api/auth/demo`
 - Auth: `GET /api/auth/me`, `PUT /api/auth/profile`
 - Leads: `GET|POST /api/leads`, `GET|PUT|DELETE /api/leads/:id`
 - Notes: `GET|POST /api/leads/:id/notes`
@@ -101,7 +106,7 @@ Frontend (`frontend/.env`): `VITE_API_URL` sets the API base URL. Copy the commi
 
 ## Authentication
 
-Login returns a bearer token used by the frontend for protected API requests. The current demo stores it in local storage. Use secure HTTP-only cookie sessions or a hardened token strategy for a public production deployment.
+Admin login and public demo entry return distinct bearer tokens. Demo tokens carry the demo/read-only role, expire after two hours, use only the static synthetic fixture, and cannot update profiles, leads, or notes. The frontend stores the active token in local storage. Use secure HTTP-only cookie sessions or a hardened token strategy for a broader public production deployment.
 
 ## Security
 
@@ -122,7 +127,7 @@ Real screenshots are not included yet. See [`docs/screenshots/README.md`](docs/s
 
 ## Deployment
 
-Not deployed yet. The backend is prepared for a Render Web Service with the following settings:
+The frontend is deployed at https://leadflow.papputhakur.com and the backend at https://leadflow-crm-dashboard.onrender.com. The backend is configured for a Render Web Service with the following settings:
 
 | Setting | Value |
 | --- | --- |
@@ -140,11 +145,11 @@ Use a dedicated MongoDB Atlas database named `leadflow_crm` and an application u
 
 ## Known Limitations
 
-- Single `admin` role; no teams or fine-grained permissions
+- Admin and read-only demo roles only; no teams or broader fine-grained permissions
 - Access token is stored in browser local storage and has no refresh-token flow
 - No automated email/WhatsApp delivery, reminders, imports, exports, or audit trail
 - Follow-up screen currently requests up to 100 server-filtered records; API pagination metadata is available for future UI controls
-- Deployment configuration and real screenshots remain to be added
+- Real screenshots remain to be added
 - React Router 6 and Vite 5 require planned major-version upgrades to clear the remaining npm advisories
 
 ## Future Improvements

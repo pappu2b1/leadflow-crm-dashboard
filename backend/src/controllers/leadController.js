@@ -1,5 +1,6 @@
 import Lead, { LEAD_PRIORITIES, LEAD_SOURCES, LEAD_STATUSES } from "../models/Lead.js";
 import { asyncHandler } from "../utils/asyncHandler.js";
+import { getDemoFollowUps, getDemoLead, getDemoLeads } from "../services/demoDataService.js";
 
 const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
@@ -34,6 +35,10 @@ const buildFilters = (query) => {
 };
 
 export const getFollowUps = asyncHandler(async (req, res) => {
+  if (req.user?.role === "demo") {
+    const { items, pagination } = getDemoFollowUps(req.query);
+    return res.json({ success: true, leads: items, pagination });
+  }
   const page = Math.max(Number(req.query.page) || 1, 1);
   const limit = Math.min(Math.max(Number(req.query.limit) || 20, 1), 100);
   const today = new Date();
@@ -55,6 +60,10 @@ export const getFollowUps = asyncHandler(async (req, res) => {
   res.json({ success: true, leads, pagination: { page, limit, total, pages: Math.ceil(total / limit) || 1 } });
 });
 export const getLeads = asyncHandler(async (req, res) => {
+  if (req.user?.role === "demo") {
+    const { items, pagination } = getDemoLeads(req.query);
+    return res.json({ success: true, leads: items, pagination });
+  }
   const page = Math.max(Number(req.query.page) || 1, 1);
   const limit = Math.min(Math.max(Number(req.query.limit) || 10, 1), 100);
   const skip = (page - 1) * limit;
@@ -74,7 +83,7 @@ export const getLeads = asyncHandler(async (req, res) => {
 });
 
 export const getLeadById = asyncHandler(async (req, res) => {
-  const lead = await Lead.findById(req.params.id);
+  const lead = req.user?.role === "demo" ? getDemoLead(req.params.id) : await Lead.findById(req.params.id);
   if (!lead) {
     res.status(404);
     throw new Error("Lead not found");
@@ -145,7 +154,7 @@ export const deleteLead = asyncHandler(async (req, res) => {
 });
 
 export const getLeadNotes = asyncHandler(async (req, res) => {
-  const lead = await Lead.findById(req.params.id).select("notes");
+  const lead = req.user?.role === "demo" ? getDemoLead(req.params.id) : await Lead.findById(req.params.id).select("notes");
   if (!lead) {
     res.status(404);
     throw new Error("Lead not found");
