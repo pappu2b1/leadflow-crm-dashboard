@@ -5,15 +5,14 @@ import { connectDB } from "../config/db.js";
 import Admin from "../models/Admin.js";
 import Lead from "../models/Lead.js";
 import { sampleLeads } from "./sampleLeads.js";
+import { validateStrongPassword } from "../utils/passwordPolicy.js";
 
 dotenv.config();
 
 export const seedDemoData = async () => {
   const email = (process.env.DEMO_ADMIN_EMAIL || "admin@leadflowcrm.com").toLowerCase().trim();
   const password = process.env.DEMO_ADMIN_PASSWORD;
-  if (!password || password.length < 12) {
-    throw new Error("DEMO_ADMIN_PASSWORD must be set to at least 12 characters");
-  }
+  validateStrongPassword(password, "DEMO_ADMIN_PASSWORD");
 
   let admin = await Admin.findOne({ email });
   if (!admin) {
